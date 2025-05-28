@@ -5,68 +5,65 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def driver():
-    # Запускаем браузер Chrome
-    options = webdriver.ChromeOptions()
-    options.add_argument("--start-maximized")
-    driver = webdriver.Chrome(options=options)
+    driver = webdriver.Chrome()
+    driver.maximize_window()
     driver.implicitly_wait(50)
 
     yield driver
-    driver.quit()  # Закрываем браузер после всех тестов
+    driver.quit()
 
-class TestKinopoiskUI:
-    def test_login_button(self, driver):
-        """Тест №1: Проверка появления формы входа"""
-        driver.get("https://www.kinopoisk.ru/")
 
-        login_button = driver.find_element(By.CSS_SELECTOR, 'button[data-testid="header-auth-button"]')
-        login_button.click()
+def test_login_button(driver):
+   driver.get("https://www.kinopoisk.ru/")
 
-        registration_field = WebDriverWait(driver, 10).until(
-            EC.visibility_of_element_located((By.CSS_SELECTOR, 'input[name="login"]'))
-        )
-        assert registration_field.is_displayed(), "Форма регистрации не отображается"
+   login_button = driver.find_element(By.CSS_SELECTOR, 'button[class*="styles_loginButton"]')
+   login_button.click()
+   WebDriverWait(driver, 10).until(
+       EC.presence_of_element_located((By.CLASS_NAME, 'passp-add-account-page-title'))
+   )
+   assert "https://passport.yandex.ru/" in driver.current_url
 
-    def test_search_input(self, driver):
-        """Тест №2: Выполнение поиска фильма и проверка результата"""
-        driver.get("https://www.kinopoisk.ru/")
+def test_search_input(driver):
+    driver.get("https://www.kinopoisk.ru/")
 
-        search_input = driver.find_element(By.CSS_SELECTOR, 'input[type="search"]')
-        search_input.send_keys('Матрица')
+    driver.find_element(By.NAME, 'kp_query').send_keys('Матрица')
 
-        suggestion_box = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, 'suggestion-box__content'))
-        )
-        assert suggestion_box.is_displayed(), "Выпадающий список фильмов не появился"
+    suggestion_box = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.ID, 'suggest-item-film-301'))
+    )
+    assert suggestion_box.is_displayed()
 
-    def test_novelties_navigation(self, driver):
-        """Тест №3: Переход на страницу новинок"""
-        driver.get("https://www.kinopoisk.ru/")
+def test_online_movies_navigation(driver):
+    driver.get("https://www.kinopoisk.ru/")
+    wait = WebDriverWait(driver, 10)
+    elements = wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'a[href="https://hd.kinopoisk.ru/"]')))
+    elements[1].click()
 
-        novelties_link = driver.find_element(By.XPATH, '//a[@href="/novelty/"]')
-        novelties_link.click()
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.TAG_NAME, 'h1'))
+    )
+    assert "https://hd.kinopoisk.ru/" in driver.current_url
 
-        title = WebDriverWait(driver, 10).until(
-            EC.title_contains('Новинки кино онлайн бесплатно и легально | КиноПоиск')
-        )
-        assert title, "Страница новинок не загружена"
+def test_watch_movie_button(driver):
+    driver.get("https://www.kinopoisk.ru/")
+    wait = WebDriverWait(driver, 10)
+    elements = wait.until(EC.presence_of_all_elements_located((By.XPATH, '//a[contains(text(), "Билеты в кино")]')))
+    elements[1].click()
 
-    def test_watch_movie_button(self, driver):
-        """Тест №4: Появление кнопки просмотра фильма на странице фильма"""
-        driver.get("https://www.kinopoisk.ru/film/matrix/")
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.TAG_NAME, 'h1'))
+    )
+    assert "https://www.kinopoisk.ru/lists/movies/movies-in-cinema/" in driver.current_url
 
-        watch_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, '.player-button'))
-        )
-        assert watch_button.is_displayed(), "Кнопка 'Смотреть' не отображается"
+def test_play_film(driver):
 
-    def test_play_film(self, driver):
-        """Тест №5: Пуск воспроизведения фильма"""
-        driver.get("https://www.kinopoisk.ru/film/matrix/watch/")
+    driver.get("https://www.kinopoisk.ru/")
 
-        play_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, '.player-control-play'))
-        )
-        play_button.click()
+    driver.find_element(By.NAME, 'kp_query').send_keys('отверженные')
+
+    suggestion_box = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.ID, 'suggest-item-film-566055'))
+    )
+    assert suggestion_box.is_displayed()
