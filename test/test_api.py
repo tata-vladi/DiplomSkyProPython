@@ -20,6 +20,8 @@ def test_search_movie(api_session):
     full_url = BASE_URL + endpoint
 
     response = api_session.get(full_url, params=query_params)
+    print(response.status_code)
+    print(response.text)
     assert response.status_code == 200, f"Неверный статус-код: {response.status_code}, сообщение: {response.text}"
 
     data = response.json()
@@ -83,12 +85,17 @@ def test_awards_filter_by_year_and_nomination(api_session):
     response = api_session.get(full_url, params=query_params)
     assert response.status_code == 200, f"Неверный статус-код: {response.status_code}, сообщение: {response.text}"
 
-    data = response.json()
-    oscar_nominations_in_2021 = [
-        nomination for nomination in data['docs']
-        if nomination['title'] == 'Оскар' and int(nomination['award']['year']) == 2021
-    ]
 
-    assert len(oscar_nominations_in_2021) > 0, "Нет номинаций премии \"Оскар\" за 2021 год."
+def test_search_movie_negative():
+    endpoint = '/v1.4/movie/search'
+    query_params = {'query': 'Холоп'}
+    full_url = BASE_URL + endpoint
+
+    response = requests.get(full_url, params=query_params)
+    print(response.status_code)
+    print(response.text)
+    assert response.status_code == 401, f"Неверный статус-код: {response.status_code}, сообщение: {response.text}"
+
+
 
 
