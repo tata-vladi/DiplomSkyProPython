@@ -1,3 +1,4 @@
+import allure
 import requests
 import pytest
 
@@ -14,7 +15,10 @@ def api_session():
     s.headers.update(HEADERS)
     yield s
 
+@allure.title("Проверка нахождения фильма 'Холоп'")
+@allure.description("Проверяет, что API корректно ищет фильм по заданному запросу.")
 def test_search_movie(api_session):
+ with allure.step("Отправляем запрос на поиск фильма 'Холоп'"):
     endpoint = '/v1.4/movie/search'
     query_params = {'query': 'Холоп'}
     full_url = BASE_URL + endpoint
@@ -22,11 +26,11 @@ def test_search_movie(api_session):
     response = api_session.get(full_url, params=query_params)
     print(response.status_code)
     print(response.text)
+ with allure.step("Проверяем успешность запроса"):
     assert response.status_code == 200, f"Неверный статус-код: {response.status_code}, сообщение: {response.text}"
 
+ with allure.step("Анализируем результат и ищем фильм 'Холоп'"):
     data = response.json()
-
-    # Проверяем, что нашлось хотя бы одно совпадающее название
     found = False
     for movie in data['docs']:
         if 'Холоп' in movie['name']:
@@ -36,30 +40,39 @@ def test_search_movie(api_session):
     assert found, "Фильм 'Холоп' не найден в результатах."
 
 
-
+@allure.title("Проверка доступности списка стран")
+@allure.description("Проверяет возможность получения полного списка стран.")
 def test_get_possible_countries(api_session):
+ with allure.step("Отправляем запрос на получение списка стран"):
     endpoint = '/v1/movie/possible-values-by-field'
     query_params = {'field': 'countries.name'}  # Параметр field указывает поле countries.name
     full_url = BASE_URL + endpoint
 
     response = api_session.get(full_url, params=query_params)
+ with allure.step("Проверяем успешность запроса"):
     assert response.status_code == 200, f"Неверный статус-код: {response.status_code}, сообщение: {response.text}"
 
+ with allure.step("Проверяем, что возвращенный объект является списком"):
     data = response.json()
     assert isinstance(data, list), "Отсутствует список в ответе"
 
-    # Проверяем, что в списке хотя бы одна страна присутствует
+ with allure.step("Проверяем, что список не пустой"):
     assert len(data) > 0, "Список стран пуст!"
 
 
+@allure.title("Проверка поиска актера 'Юра Борисов'")
+@allure.description("Проверяет, что API корректно находит нужного актера.")
 def test_search_person(api_session):
+ with allure.step("Отправляем запрос на поиск актера 'Юра Борисов'"):
     endpoint = '/v1.4/person/search'
     query_params = {'query': 'Юра Борисов'}
     full_url = BASE_URL + endpoint
 
     response = api_session.get(full_url, params=query_params)
+ with allure.step("Проверяем успешность запроса"):
     assert response.status_code == 200, f"Неверный статус-код: {response.status_code}, сообщение: {response.text}"
 
+ with allure.step("Анализируем результат и ищем актера 'Юра Борисов'"):
     data = response.json()
     found = False
     for person in data['docs']:
@@ -70,7 +83,10 @@ def test_search_person(api_session):
     assert found, "Актер 'Юра Борисов' не найден в результатах."
 
 
+@allure.title("Проверка фильтрации наград 'Оскар' за 2021 год")
+@allure.description("Проверяет возможность фильтрации наград по критерию 'Оскар' за определенный год.")
 def test_awards_filter_by_year_and_nomination(api_session):
+ with allure.step("Отправляем запрос на получение наград с фильтрацией"):
     endpoint = '/v1.4/movie/awards'
     query_params = {
         'selectFields': 'nomination',
@@ -83,10 +99,14 @@ def test_awards_filter_by_year_and_nomination(api_session):
     full_url = BASE_URL + endpoint
 
     response = api_session.get(full_url, params=query_params)
+ with allure.step("Проверяем успешность запроса"):
     assert response.status_code == 200, f"Неверный статус-код: {response.status_code}, сообщение: {response.text}"
 
 
+@allure.title("Проверка отсутствия токена")
+@allure.description("Проверяет поведение API при отсутствии токена аутентификации.")
 def test_search_movie_negative():
+ with allure.step("Отправляем запрос без заголовков авторизации"):
     endpoint = '/v1.4/movie/search'
     query_params = {'query': 'Холоп'}
     full_url = BASE_URL + endpoint
@@ -94,6 +114,7 @@ def test_search_movie_negative():
     response = requests.get(full_url, params=query_params)
     print(response.status_code)
     print(response.text)
+ with allure.step("Проверяем ошибку авторизации"):
     assert response.status_code == 401, f"Неверный статус-код: {response.status_code}, сообщение: {response.text}"
 
 
